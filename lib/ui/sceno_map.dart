@@ -8,6 +8,7 @@ import 'package:http/http.dart';
 import 'package:intl/intl.dart';
 import 'package:latlong/latlong.dart';
 import 'package:location/location.dart';
+import 'package:sceno_map_flutter/data/repository.dart';
 import 'package:sceno_map_flutter/models/event.dart';
 import 'package:sceno_map_flutter/ui/event_icon.dart';
 import 'package:sceno_map_flutter/models/model.dart';
@@ -45,6 +46,7 @@ class _ScenoMapState extends State<ScenoMap> {
   MapController _mapController;
   double _zoom;
   List<Event> _events = List();
+  Repository repository = Repository.getInstance();
 
   @override
   void initState() {
@@ -72,8 +74,18 @@ class _ScenoMapState extends State<ScenoMap> {
       }
     });
 
+    repository.getEvents().listen((events) {
+      setState(() {
+        _events = events;
+      });
+    });
+    _updateDataEvents();
+  }
 
-    _fetchEvents();
+  _updateDataEvents() {
+    var now = DateTime.now();
+    var after = now.add(Duration(hours: 24));
+    repository.updateEvents(now, after, _currentLocation["latitude"], _currentLocation["longitude"]);
   }
 
   _initPlatformState() async {
@@ -99,39 +111,11 @@ class _ScenoMapState extends State<ScenoMap> {
     });
   }
 
-  void _fetchEvents() async {
 
-    var now = DateTime.now();
-    var after = now.add(Duration(hours: 24));
-    var queryParameters = {
-      'startDate': DateFormat("yyyy-MM-dd HH:mm:ss").format(now),
-      'endDate': DateFormat("yyyy-MM-dd HH:mm:ss").format(after),
-      'latitude': _currentLocation["latitude"].toString(),
-      'longitude': _currentLocation["longitude"].toString()
-    };
-
-    print(queryParameters);
-    var uri = Uri.https('prod.app.sceno.fr', 'Sceno/rs/webservice/getEvents', queryParameters);
-    print(uri.toString());
-    final client = Client();
-    await client.get(uri).then((response) {
-      Map<String, dynamic> eventsJSON = jsonDecode(response.body.toString());
-      List<Event> events = List<Event>();
-      for (var eventJSON in eventsJSON["Event"]) {
-        var event = Event.fromJson(eventJSON);
-        events.add(event);
-        print(
-            '${event.id} [${event.latitude}, ${event.longitude}] - ${event.category}');
-      }
-
-      setState(() {
-        _events = events;
-      });
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
+    print("build");
     return Scaffold(
         appBar: AppBar(
           title: Text(widget.title),
@@ -156,6 +140,7 @@ class _ScenoMapState extends State<ScenoMap> {
   }
 
   Widget _buildMap(BuildContext context) {
+    print("buildMap");
     return FlutterMap(
       key: _flutterMapKey,
       mapController: _mapController,
@@ -174,7 +159,7 @@ class _ScenoMapState extends State<ScenoMap> {
   }
 
   List<Marker> _buildMarkers() {
-    print('buildMarkers');
+    print('buildMarkers ${_events.length}');
     List<Marker> list = List();
 
     list.add(Marker(
@@ -184,8 +169,9 @@ class _ScenoMapState extends State<ScenoMap> {
           LatLng(_currentLocation["latitude"], _currentLocation["longitude"]),
       builder: (ctx) => Container(
             child: Icon(
-              Icons.location_on,
+              Icons.my_location,
               color: Colors.red,
+              size: 35,
             ),
           ),
     ));
@@ -209,6 +195,7 @@ class _ScenoMapState extends State<ScenoMap> {
   }
 
   Widget _buildControl() {
+    print("buildControl");
     return Row(
       mainAxisAlignment: MainAxisAlignment.start,
       children: <Widget>[
@@ -262,7 +249,7 @@ class _ScenoMapState extends State<ScenoMap> {
             icon: Icon(Icons.refresh),
             onPressed: () {
               print('press');
-              _fetchEvents();
+              _updateDataEvents();
             })
       ],
     );
