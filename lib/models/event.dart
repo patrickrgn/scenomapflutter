@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:sceno_map_flutter/models/category.dart';
 
 class ResultEvent {
@@ -74,4 +75,23 @@ class Event {
     "longitude": longitude,
     "data": data,
   };
+
+  Color getColor() {
+    var defaultColor = Colors.black;
+    switch (category) {
+      case "Musique":
+        defaultColor = Colors.blue;
+        break;
+      case "Littérature":
+        defaultColor = Colors.red;
+        break;
+      case "Danse":
+        defaultColor = Colors.orange;
+        break;
+      case "Exposition":
+        defaultColor = Colors.amber;
+        break;
+    }
+    return defaultColor;
+  }
 }

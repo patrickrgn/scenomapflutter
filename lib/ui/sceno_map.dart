@@ -1,4 +1,3 @@
-import 'dart:_http';
 import 'dart:async';
 import 'dart:convert';
 
@@ -6,9 +5,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:http/http.dart';
+import 'package:intl/intl.dart';
 import 'package:latlong/latlong.dart';
 import 'package:location/location.dart';
 import 'package:sceno_map_flutter/models/event.dart';
+import 'package:sceno_map_flutter/ui/event_icon.dart';
 import 'package:sceno_map_flutter/models/model.dart';
 
 class ScenoMap extends StatefulWidget {
@@ -49,7 +50,7 @@ class _ScenoMapState extends State<ScenoMap> {
   void initState() {
     super.initState();
 
-    _fetchEvents();
+
 
     _initPlatformState();
     _zoom = 15;
@@ -70,6 +71,9 @@ class _ScenoMapState extends State<ScenoMap> {
         print("result null");
       }
     });
+
+
+    _fetchEvents();
   }
 
   _initPlatformState() async {
@@ -96,9 +100,21 @@ class _ScenoMapState extends State<ScenoMap> {
   }
 
   void _fetchEvents() async {
+
+    var now = DateTime.now();
+    var after = now.add(Duration(hours: 24));
+    var queryParameters = {
+      'startDate': DateFormat("yyyy-MM-dd HH:mm:ss").format(now),
+      'endDate': DateFormat("yyyy-MM-dd HH:mm:ss").format(after),
+      'latitude': _currentLocation["latitude"].toString(),
+      'longitude': _currentLocation["longitude"].toString()
+    };
+
+    print(queryParameters);
+    var uri = Uri.https('prod.app.sceno.fr', 'Sceno/rs/webservice/getEvents', queryParameters);
+    print(uri.toString());
     final client = Client();
-    final response = await client.get(widget.apiEvents,
-        headers: {HttpHeaders.contentEncodingHeader: 'utf8'}).then((response) {
+    await client.get(uri).then((response) {
       Map<String, dynamic> eventsJSON = jsonDecode(response.body.toString());
       List<Event> events = List<Event>();
       for (var eventJSON in eventsJSON["Event"]) {
@@ -175,43 +191,16 @@ class _ScenoMapState extends State<ScenoMap> {
     ));
 
     _events.forEach((event) {
-      var icon = Icon(
-        Icons.event,
-        color: Colors.blue,
-        size: 35,
-      );
-      switch (event.category) {
-        case "Musique":
-          icon = Icon(Icons.music_note, color: Colors.green, size: 35);
-          break;
-        case "Littérature":
-          icon = Icon(Icons.library_books, color: Colors.orange, size: 35);
-          break;
-      }
+
+
 
       list.add(Marker(
         width: 35.0,
         height: 35.0,
         point: LatLng(event.latitude, event.longitude),
+        anchorPos: AnchorPos.align(AnchorAlign.top),
         builder: (ctx) => Container(
-              child: IconButton(
-                  icon: icon,
-                  onPressed: () {
-                    showDialog(
-                        context: this.context,
-                        builder: (BuildContext context) {
-                          return SimpleDialog(
-                            title: Text(event.title),
-                            children: <Widget>[
-                              Text("Adresse : ${event.address}"),
-                              Text("Début : ${event.startDate}"),
-                              Text("Fin : ${event.endDate}")
-                            ],
-                          );
-                        });
-
-                    print('press: ${event.id}');
-                  }),
+              child: EventIcon(event: event),
             ),
       ));
     });
