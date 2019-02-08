@@ -1,11 +1,15 @@
+import 'dart:_http';
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:http/http.dart';
 import 'package:latlong/latlong.dart';
 import 'package:location/location.dart';
-import 'package:sceno_map_flutter/model.dart';
+import 'package:sceno_map_flutter/models/event.dart';
+import 'package:sceno_map_flutter/models/model.dart';
 
 class ScenoMap extends StatefulWidget {
   ScenoMap({Key key, this.title}) : super(key: key);
@@ -13,6 +17,8 @@ class ScenoMap extends StatefulWidget {
   final String mapboxToken =
       'pk.eyJ1IjoicGF0cmlja3JnbiIsImEiOiJjanJxamV4MTgwMWJkNDludmVsY2M4cm9xIn0.ULxaU9Qghx40v52oHFaZcw';
   final String thunderForestToken = '9b9c7c37c5914503a5a75c65f0ecb615';
+  final String apiEvents =
+      'https://prod.app.sceno.fr/Sceno/rs/webservice/getEvents?startDate=2019-02-08 18:00:00&endDate=2019-02-08 20:00:00&latitude=47.469559&longitude=-0.550723';
   final String title;
 
   @override
@@ -27,7 +33,7 @@ class _ScenoMapState extends State<ScenoMap> {
 
   StreamSubscription<Map<String, double>> _locationSubscription;
 
-  Location _location = new Location();
+  Location _location = Location();
   bool _permission = false;
   String error;
 
@@ -37,12 +43,15 @@ class _ScenoMapState extends State<ScenoMap> {
 
   MapController _mapController;
   double _zoom;
+  List<Event> _events = List();
 
   @override
   void initState() {
     super.initState();
 
-    initPlatformState();
+    _fetchEvents();
+
+    _initPlatformState();
     _zoom = 15;
     _mapController = MapController();
     _providerMap = TypeProviderMap.osm;
@@ -56,10 +65,6 @@ class _ScenoMapState extends State<ScenoMap> {
             "latitude: ${result["latitude"]} - longitude: ${result["longitude"]}");
         setState(() {
           _currentLocation = result;
-          _mapController.move(
-              LatLng(
-                  _currentLocation["latitude"], _currentLocation["longitude"]),
-              _mapController.zoom);
         });
       } else {
         print("result null");
@@ -67,15 +72,12 @@ class _ScenoMapState extends State<ScenoMap> {
     });
   }
 
-  // Platform messages are asynchronous, so we initialize in an async method.
-  initPlatformState() async {
+  _initPlatformState() async {
     Map<String, double> location;
-    // Platform messages may fail, so we use a try/catch PlatformException.
 
     try {
       _permission = await _location.hasPermission();
       location = await _location.getLocation();
-
       error = null;
     } on PlatformException catch (e) {
       if (e.code == 'PERMISSION_DENIED') {
@@ -90,6 +92,25 @@ class _ScenoMapState extends State<ScenoMap> {
 
     setState(() {
       _startLocation = location;
+    });
+  }
+
+  void _fetchEvents() async {
+    final client = Client();
+    final response = await client.get(widget.apiEvents,
+        headers: {HttpHeaders.contentEncodingHeader: 'utf8'}).then((response) {
+      Map<String, dynamic> eventsJSON = jsonDecode(response.body.toString());
+      List<Event> events = List<Event>();
+      for (var eventJSON in eventsJSON["Event"]) {
+        var event = Event.fromJson(eventJSON);
+        events.add(event);
+        print(
+            '${event.id} [${event.latitude}, ${event.longitude}] - ${event.category}');
+      }
+
+      setState(() {
+        _events = events;
+      });
     });
   }
 
@@ -130,23 +151,72 @@ class _ScenoMapState extends State<ScenoMap> {
       layers: [
         _getTileLayer(),
         MarkerLayerOptions(
-          markers: [
-            Marker(
-              width: 30.0,
-              height: 30.0,
-              point: LatLng(
-                  _currentLocation["latitude"], _currentLocation["longitude"]),
-              builder: (ctx) => Container(
-                    child: Icon(
-                      Icons.location_on,
-                      color: Colors.red,
-                    ),
-                  ),
-            ),
-          ],
+          markers: _buildMarkers(),
         ),
       ],
     );
+  }
+
+  List<Marker> _buildMarkers() {
+    print('buildMarkers');
+    List<Marker> list = List();
+
+    list.add(Marker(
+      width: 30.0,
+      height: 30.0,
+      point:
+          LatLng(_currentLocation["latitude"], _currentLocation["longitude"]),
+      builder: (ctx) => Container(
+            child: Icon(
+              Icons.location_on,
+              color: Colors.red,
+            ),
+          ),
+    ));
+
+    _events.forEach((event) {
+      var icon = Icon(
+        Icons.event,
+        color: Colors.blue,
+        size: 35,
+      );
+      switch (event.category) {
+        case "Musique":
+          icon = Icon(Icons.music_note, color: Colors.green, size: 35);
+          break;
+        case "Littérature":
+          icon = Icon(Icons.library_books, color: Colors.orange, size: 35);
+          break;
+      }
+
+      list.add(Marker(
+        width: 35.0,
+        height: 35.0,
+        point: LatLng(event.latitude, event.longitude),
+        builder: (ctx) => Container(
+              child: IconButton(
+                  icon: icon,
+                  onPressed: () {
+                    showDialog(
+                        context: this.context,
+                        builder: (BuildContext context) {
+                          return SimpleDialog(
+                            title: Text(event.title),
+                            children: <Widget>[
+                              Text("Adresse : ${event.address}"),
+                              Text("Début : ${event.startDate}"),
+                              Text("Fin : ${event.endDate}")
+                            ],
+                          );
+                        });
+
+                    print('press: ${event.id}');
+                  }),
+            ),
+      ));
+    });
+
+    return list;
   }
 
   Widget _buildControl() {
@@ -174,7 +244,7 @@ class _ScenoMapState extends State<ScenoMap> {
                 width: 50,
                 child: IconButton(
                     icon: Icon(Icons.zoom_out),
-                    color: Colors.grey,
+                    color: Colors.black,
                     padding: EdgeInsets.all(0),
                     onPressed: () {
                       setState(() {
@@ -187,7 +257,7 @@ class _ScenoMapState extends State<ScenoMap> {
                 width: 50,
                 child: IconButton(
                     icon: Icon(Icons.zoom_in),
-                    color: Colors.grey,
+                    color: Colors.black,
                     padding: EdgeInsets.all(0),
                     onPressed: () {
                       setState(() {
@@ -199,6 +269,12 @@ class _ScenoMapState extends State<ScenoMap> {
             ],
           ),
         ),
+        IconButton(
+            icon: Icon(Icons.refresh),
+            onPressed: () {
+              print('press');
+              _fetchEvents();
+            })
       ],
     );
   }
