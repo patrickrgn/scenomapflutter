@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:sceno_map_flutter/ui/sceno_map.dart';
+import 'package:sceno_map_flutter/screens/home.dart';
 
 
 void main() => runApp(Sceno());
@@ -14,7 +14,7 @@ class Sceno extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: ScenoMap(title: 'Sceno - Map'),
+      home: Home(),
     );
   }
 }
