@@ -22,6 +22,8 @@ class MapSceno extends StatelessWidget {
   double zoom = 15.0;
   String error;
 
+  bool _mapReady = false;
+
   Map<String, double> _startLocation;
   Map<String, double> _currentLocation;
 
@@ -43,35 +45,38 @@ class MapSceno extends StatelessWidget {
     );
 
     mapBloc.zoom.listen((newZoom) {
-      if (_mapController.ready) {
-        print('New zoom: $zoom}');
-        zoom = newZoom;
-        _mapController.move(_mapController.center, zoom);
-        print('Move zoom :${_mapController.center} - ${_mapController.zoom}');
+      print('New zoom: $zoom}');
+      zoom = newZoom;
+      if(_mapController.ready && _mapReady) {
+        print('Move zoom :$position} - $zoom');
+        _mapController.move(position, zoom);
+
       }
     });
     mapBloc.position.listen((newPosition) {
-      if (_mapController.ready) {
-        position = newPosition;
-        print('New position: $position}');
-        _mapController.move(position, _mapController.zoom);
-        print(
-            'Move position :${_mapController.center} - ${_mapController.zoom}');
-        markerPosition = Marker(
-            point: position,
-            builder: (BuildContext context) {
-              print('update markerPosition2');
-              return Icon(Icons.location_on, color: Colors.red,);
-            }
-        );
+      position = newPosition;
+      if(_mapController.ready && _mapReady) {
+        print('Move position :$position} - $zoom');
+//        _mapController.move(position, zoom);
         positionController.add(null);
       }
+    });
+
+    mapBloc.toPosition.listen((data) {
+      _mapController.move(position, zoom);
+    });
+
+    _mapController.onReady.then((value) {
+      print('MapController is ready');
+      _mapReady = true;
+      _mapController.move(position, zoom);
     });
   }
 
 
   @override
   Widget build(BuildContext context) {
+    print('build map');
     return StreamBuilder(
         stream: mapBloc.mapModel,
         initialData: MapModel(provider: TypeProviderMap.osm),
@@ -89,15 +94,24 @@ class MapSceno extends StatelessWidget {
                 ]),
             layers: [
               _getTileLayer(snapshot.data),
-//              MarkerLayerOptions(
-//                rebuild: positionController.stream,
-//                markers: [
-//                  markerPosition
-//                ],
-//              ),
+              MarkerLayerOptions(
+                rebuild: positionController.stream,
+                markers: getMarkers(),
+              ),
             ],
           );
         });
+  }
+
+  List<Marker> getMarkers() {
+    final Marker marker = Marker(
+        point: position,
+        builder: (BuildContext context) {
+          print('update Marker');
+          return FlutterLogo();
+        }
+    );
+    return [marker];
   }
 
   TileLayerOptions _getTileLayer(MapModel map) {

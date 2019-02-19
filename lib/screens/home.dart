@@ -10,6 +10,7 @@ import 'package:sceno_map_flutter/models/event.dart';
 import 'package:sceno_map_flutter/models/model.dart';
 import 'package:sceno_map_flutter/widgets/event_icon.dart';
 import 'package:sceno_map_flutter/widgets/map_control.dart';
+import 'package:sceno_map_flutter/widgets/map_infos.dart';
 import 'package:sceno_map_flutter/widgets/map_provider.dart';
 import 'package:sceno_map_flutter/widgets/map_sceno.dart';
 import 'package:sceno_map_flutter/widgets/map_style.dart';
@@ -114,10 +115,23 @@ class _HomeState extends State<Home> {
           child: Column(
             children: <Widget>[
               Flexible(
-                child: MapSceno(position: LatLng(47.4929539, -0.5512537), zoom: 15.0,),
+                child: Stack(
+                  children: <Widget>[
+                    MapSceno(position: LatLng(47.4929539, -0.5512537), zoom: 15.0,),
+                    Positioned(
+                      right: 0,
+                     top: 0,
+                     child: MapControl(),
+                    ),
+                    Positioned(
+                      bottom: 0,
+                      child: MapInfos(),
+                    )
+                  ],
+                ),
               ),
               Column(
-                children: <Widget>[MapControl(), MapProvider(), MapStyle()],
+                children: <Widget>[MapProvider(), MapStyle()],
               )
             ],
           ),

@@ -1,19 +1,23 @@
 import 'dart:async';
 
 import 'package:latlong/latlong.dart';
+import 'package:rxdart/rxdart.dart';
 import 'package:sceno_map_flutter/models/MapModel.dart';
-import 'package:sceno_map_flutter/models/model.dart';
 
 class MapBloc {
 
   double _zoom = 0;
-  final StreamController<MapModel> _mapController = StreamController.broadcast();
-  final StreamController<double> _zoomController = StreamController.broadcast();
-  final StreamController<LatLng> _positionController = StreamController.broadcast();
+  final BehaviorSubject<MapModel> _mapController = BehaviorSubject();
+//  final StreamController<double> _zoomController = StreamController.broadcast();
+  final BehaviorSubject<double> _zoomController = BehaviorSubject();
+  final BehaviorSubject<LatLng> _positionController = BehaviorSubject();
+  final BehaviorSubject<Null> _moveToPositionController = BehaviorSubject();
+
 
   Stream<MapModel> get mapModel => _mapController.stream;
   Stream<double> get zoom => _zoomController.stream;
   Stream<LatLng> get position => _positionController.stream;
+  Stream<Null> get toPosition => _moveToPositionController.stream;
 
   // MAP MODEL
   void updateMapModel(MapModel model) {
@@ -39,10 +43,16 @@ class MapBloc {
     _positionController.add(position);
   }
 
+  // MOVE TO POSITION
+  void moveToPosition() {
+    _moveToPositionController.add(null);
+  }
+
   void dispose() {
     _mapController.close();
     _zoomController.close();
     _positionController.close();
+    _moveToPositionController.close();
   }
 }
 

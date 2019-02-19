@@ -1,13 +1,13 @@
 enum TypeProviderMap { osm, mapbox, thunderForest }
 class StyleThunderForest {
-  static final CYCLE = "cycle";
-  static final NEIGHBOURHOOD= "neighbourhood";
-  static final TRANSPORT= "transport";
+  static const CYCLE = "cycle";
+  static const NEIGHBOURHOOD= "neighbourhood";
+  static const TRANSPORT= "transport";
 }
 
 class StyleMapbox {
-  static final STREETS = "mapbox.streets";
-  static final SATELLITE= "mapbox.satellite";
+  static const STREETS = "mapbox.streets";
+  static const SATELLITE= "mapbox.satellite";
 }
 
 typedef StyleCallback = void Function(String style);

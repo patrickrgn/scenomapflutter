@@ -11,8 +11,8 @@ class MapControl extends StatelessWidget {
 
   Widget _buildControl() {
     print("buildControl");
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.start,
+    return Column(
+//      mainAxisAlignment: MainAxisAlignment.start,
       children: <Widget>[
         SizedBox(
           width: 50,
@@ -21,45 +21,29 @@ class MapControl extends StatelessWidget {
               color: Colors.red,
               padding: EdgeInsets.all(0),
               onPressed: () {
-
-//                _mapController.move(
-//                    LatLng(_currentLocation["latitude"], _currentLocation["longitude"]), _mapController.zoom);
+                mapBloc.moveToPosition();
               }),
         ),
-        Container(
-          margin: EdgeInsets.only(left: 5.0, right: 5.0),
-          child: Row(
-            children: <Widget>[
-              SizedBox(
-                width: 50,
-                child: IconButton(
-                    icon: Icon(Icons.zoom_out),
-                    color: Colors.black,
-                    padding: EdgeInsets.all(0),
-                    onPressed: () {
-                      mapBloc.zoomOut();
-//                      setState(() {
-//                        _zoom--;
-//                        _mapController.move(_mapController.center, _zoom);
-//                      });
-                    }),
-              ),
-              SizedBox(
-                width: 50,
-                child: IconButton(
-                    icon: Icon(Icons.zoom_in),
-                    color: Colors.black,
-                    padding: EdgeInsets.all(0),
-                    onPressed: () {
-                      mapBloc.zoomIn();
-//                      setState(() {
-//                        _zoom++;
-//                        _mapController.move(_mapController.center, _zoom);
-//                      });
-                    }),
-              ),
-            ],
-          ),
+
+        SizedBox(
+          width: 50,
+          child: IconButton(
+              icon: Icon(Icons.zoom_in),
+              color: Colors.black,
+              padding: EdgeInsets.all(0),
+              onPressed: () {
+                mapBloc.zoomIn();
+              }),
+        ),
+        SizedBox(
+          width: 50,
+          child: IconButton(
+              icon: Icon(Icons.zoom_out),
+              color: Colors.black,
+              padding: EdgeInsets.all(0),
+              onPressed: () {
+                mapBloc.zoomOut();
+              }),
         ),
         IconButton(
             icon: Icon(Icons.refresh),
@@ -67,26 +51,22 @@ class MapControl extends StatelessWidget {
               print('press');
 //              _updateDataEvents();
             }),
-        Column(
-          children: <Widget>[
-            StreamBuilder(
-              stream: mapBloc.position,
-              builder: (BuildContext context, AsyncSnapshot<LatLng> snapshot) {
-                final double latitude = snapshot.data != null && snapshot.data.latitude != null ? snapshot.data.latitude : 0;
-                final double longitude = snapshot.data != null && snapshot.data.longitude != null ? snapshot.data.longitude: 0;
-                return Text('$latitude|$longitude');
-              },
-            ),
-            StreamBuilder(
-              stream: mapBloc.zoom,
-              builder: (BuildContext context, AsyncSnapshot<double> snapshot) {
-                print('update zoom');
-                final double zoom = snapshot.data != null ? snapshot.data : 0;
-                return Text('Zoom : $zoom');
-              },
-            )
-          ],
-        )
+//        StreamBuilder(
+//          stream: mapBloc.position,
+//          builder: (BuildContext context, AsyncSnapshot<LatLng> snapshot) {
+//            final double latitude = snapshot.data != null && snapshot.data.latitude != null ? snapshot.data.latitude : 0;
+//            final double longitude = snapshot.data != null && snapshot.data.longitude != null ? snapshot.data.longitude: 0;
+//            return Text('$latitude|$longitude');
+//          },
+//        ),
+//        StreamBuilder(
+//          stream: mapBloc.zoom,
+//          builder: (BuildContext context, AsyncSnapshot<double> snapshot) {
+//            print('update zoom');
+//            final double zoom = snapshot.data != null ? snapshot.data : 0;
+//            return Text('Zoom : $zoom');
+//          },
+//        )
 
 
       ],
