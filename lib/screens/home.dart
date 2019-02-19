@@ -9,11 +9,11 @@ import 'package:sceno_map_flutter/models/MapModel.dart';
 import 'package:sceno_map_flutter/models/event.dart';
 import 'package:sceno_map_flutter/models/model.dart';
 import 'package:sceno_map_flutter/widgets/event_icon.dart';
-import 'package:sceno_map_flutter/widgets/map_control.dart';
+import 'package:sceno_map_flutter/widgets/map_controls.dart';
 import 'package:sceno_map_flutter/widgets/map_infos.dart';
-import 'package:sceno_map_flutter/widgets/map_provider.dart';
+import 'package:sceno_map_flutter/widgets/map_providers.dart';
 import 'package:sceno_map_flutter/widgets/map_sceno.dart';
-import 'package:sceno_map_flutter/widgets/map_style.dart';
+import 'package:sceno_map_flutter/widgets/map_styles.dart';
 
 class Home extends StatefulWidget {
   final String mapboxToken =
@@ -121,7 +121,7 @@ class _HomeState extends State<Home> {
                     Positioned(
                       right: 0,
                      top: 0,
-                     child: MapControl(),
+                     child: MapControls(),
                     ),
                     Positioned(
                       bottom: 0,
@@ -131,7 +131,7 @@ class _HomeState extends State<Home> {
                 ),
               ),
               Column(
-                children: <Widget>[MapProvider(), MapStyle()],
+                children: <Widget>[MapProviders(), MapStyles()],
               )
             ],
           ),

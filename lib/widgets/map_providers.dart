@@ -4,7 +4,7 @@ import 'package:sceno_map_flutter/blocs/map_bloc.dart';
 import 'package:sceno_map_flutter/models/MapModel.dart';
 import 'package:sceno_map_flutter/models/model.dart';
 
-class MapProvider extends StatelessWidget {
+class MapProviders extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _buildProviderMap();

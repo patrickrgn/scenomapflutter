@@ -3,7 +3,7 @@ import 'package:sceno_map_flutter/blocs/map_bloc.dart';
 import 'package:sceno_map_flutter/models/MapModel.dart';
 import 'package:sceno_map_flutter/models/model.dart';
 
-class MapStyle extends StatelessWidget {
+class MapStyles extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _buildStyleMap();
