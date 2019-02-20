@@ -13,24 +13,13 @@ class Repository {
     return Repository();
   }
 
-
-  var _eventsController = StreamController<List<Event>>();
-
-  Stream<List<Event>> getEvents() {
-    return _eventsController.stream;
-  }
-
-  void dispose() {
-    _eventsController.close();
-  }
-
-  Future updateEvents(DateTime startDate, DateTime endDate, double latitude, double longiture) async {
+  Future<List<Event>> updateEvents(DateTime startDate, DateTime endDate, double latitude, double longitute) async {
     var formatDate = DateFormat("yyyy-MM-dd HH:mm:ss");
     var queryParameters = {
       'startDate': formatDate.format(startDate),
       'endDate': formatDate.format(endDate),
       'latitude': latitude.toString(),
-      'longitude': longiture.toString()
+      'longitude': longitute.toString()
     };
 
     var uri = Uri.https('prod.app.sceno.fr', 'Sceno/rs/webservice/getEvents', queryParameters);
@@ -45,7 +34,7 @@ class Repository {
       print('${event.id} [${event.latitude}, ${event.longitude}] - ${event.category}');
     }
 
-    _eventsController.add(events);
+    return events;
   }
 
 }

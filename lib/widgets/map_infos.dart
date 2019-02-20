@@ -9,22 +9,20 @@ class MapInfos extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.start,
         children: <Widget>[
-        StreamBuilder(
-          stream: mapBloc.position,
-          builder: (BuildContext context, AsyncSnapshot<LatLng> snapshot) {
-            final double latitude = snapshot.data != null && snapshot.data.latitude != null ? snapshot.data.latitude : 0;
-            final double longitude = snapshot.data != null && snapshot.data.longitude != null ? snapshot.data.longitude: 0;
-            return Text('$latitude|$longitude');
-          },
-        ),
-        StreamBuilder(
-          stream: mapBloc.zoom,
-          builder: (BuildContext context, AsyncSnapshot<double> snapshot) {
-            print('update zoom');
-            final double zoom = snapshot.data != null ? snapshot.data : 0;
-            return Text('Zoom : $zoom');
-          },
-        )
+          StreamBuilder(
+            stream: mapBloc.position,
+            builder: (BuildContext context, AsyncSnapshot<LatLng> snapshot) {
+              final double latitude =
+                  snapshot.data != null && snapshot.data.latitude != null
+                      ? snapshot.data.latitude
+                      : 0;
+              final double longitude =
+                  snapshot.data != null && snapshot.data.longitude != null
+                      ? snapshot.data.longitude
+                      : 0;
+              return Text('lat:$latitude | long:$longitude');
+            },
+          ),
         ],
       ),
     );

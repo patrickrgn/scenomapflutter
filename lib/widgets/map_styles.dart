@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sceno_map_flutter/blocs/map_bloc.dart';
-import 'package:sceno_map_flutter/models/MapModel.dart';
+import 'package:sceno_map_flutter/models/map_model.dart';
 import 'package:sceno_map_flutter/models/model.dart';
 
 class MapStyles extends StatelessWidget {
@@ -86,10 +86,10 @@ class MapStyles extends StatelessWidget {
           onPressed: () => onPressed(style));
 
   void _updateStyleThunderForest(String style) {
-    mapBloc.updateMapModel(MapModel(provider: TypeProviderMap.thunderForest, style: style));
+    mapBloc.updateMapModel(provider: TypeProviderMap.thunderForest, style: style);
   }
 
   void _updateStyleMapbox(String style) {
-    mapBloc.updateMapModel(MapModel(provider: TypeProviderMap.mapbox, style: style));
+    mapBloc.updateMapModel(provider: TypeProviderMap.mapbox, style: style);
   }
 }

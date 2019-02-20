@@ -1,126 +1,139 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong/latlong.dart';
-import 'package:location/location.dart';
-import 'package:sceno_map_flutter/data/repository.dart';
-import 'package:sceno_map_flutter/models/MapModel.dart';
-import 'package:sceno_map_flutter/models/event.dart';
-import 'package:sceno_map_flutter/models/model.dart';
 import 'package:sceno_map_flutter/blocs/map_bloc.dart';
+import 'package:sceno_map_flutter/data/repository.dart';
+import 'package:sceno_map_flutter/models/event.dart';
+import 'package:sceno_map_flutter/models/map_model.dart';
+import 'package:sceno_map_flutter/models/model.dart';
+import 'package:sceno_map_flutter/widgets/event_icon.dart';
 
-class MapSceno extends StatelessWidget {
+class MapSceno extends StatefulWidget {
   final String mapboxToken =
       'pk.eyJ1IjoicGF0cmlja3JnbiIsImEiOiJjanJxamV4MTgwMWJkNDludmVsY2M4cm9xIn0.ULxaU9Qghx40v52oHFaZcw';
   final String thunderForestToken = '9b9c7c37c5914503a5a75c65f0ecb615';
 
   final GlobalKey mapKey = GlobalKey();
 
-  LatLng position = LatLng(47.4929539, -0.5512537);
-  double zoom = 15.0;
   String error;
 
-  bool _mapReady = false;
 
-  Map<String, double> _startLocation;
-  Map<String, double> _currentLocation;
-
-  MapController _mapController = MapController();
-  List<Event> _events = List();
   Repository repository = Repository.getInstance();
 
-  final StreamController<Null> positionController = StreamController
-      .broadcast();
-  Marker markerPosition = Marker();
+  LatLng defaultPosition;
+  double defaultZoom;
+  MapPosition mapPosition;
 
-  MapSceno({Key key, this.position, this.zoom}) : super(key: key) {
-    markerPosition = Marker(
-        point: position,
-        builder: (BuildContext context) {
-          print('update Marker');
-          return FlutterLogo();
-        }
-    );
-
-    mapBloc.zoom.listen((newZoom) {
-      print('New zoom: $zoom}');
-      zoom = newZoom;
-      if(_mapController.ready && _mapReady) {
-        print('Move zoom :$position} - $zoom');
-        _mapController.move(position, zoom);
-
-      }
-    });
-    mapBloc.position.listen((newPosition) {
-      position = newPosition;
-      if(_mapController.ready && _mapReady) {
-        print('Move position :$position} - $zoom');
-//        _mapController.move(position, zoom);
-        positionController.add(null);
-      }
-    });
-
-    mapBloc.toPosition.listen((data) {
-      _mapController.move(position, zoom);
-    });
-
-    _mapController.onReady.then((value) {
-      print('MapController is ready');
-      _mapReady = true;
-      _mapController.move(position, zoom);
-    });
+  MapSceno(
+      {Key key, @required this.defaultPosition, @required this.defaultZoom})
+      : super(key: key) {
   }
 
+  @override
+  State<StatefulWidget> createState() {
+    return _MapScenoState();
+  }
+}
+
+class _MapScenoState extends State<MapSceno> {
+  MapModel _mapModel = MapModel(provider: TypeProviderMap.osm);
+  Marker _markerPosition;
+  MapController _mapController = MapController();
+  List<Event> _events = [];
+
+  @override
+  void initState() {
+    mapBloc.mapModel.listen((mapModel) {
+      setState(() {
+        _mapModel = mapModel;
+        _markerPosition = Marker(
+            point: _mapModel.position,
+            builder: (BuildContext context) {
+              return Icon(Icons.location_on, color: Colors.red, size: 30,);
+            });
+      });
+    });
+
+    mapBloc.toPosition.listen((position) {
+      double zoom = _mapController.zoom != null ? _mapController.zoom : widget.defaultZoom;
+      _mapController.move(_mapModel.position, zoom);
+    });
+
+    mapBloc.allEvents.listen((events) {
+      setState(() {
+        print('update events');
+        _events = events;
+      });
+    });
+
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
-    print('build map');
-    return StreamBuilder(
-        stream: mapBloc.mapModel,
-        initialData: MapModel(provider: TypeProviderMap.osm),
-        builder: (BuildContext context, AsyncSnapshot snapshot) {
-          print('buildMap');
-          return FlutterMap(
-            key: mapKey,
-            mapController: _mapController,
-            options: MapOptions(
-                center: LatLng(position.latitude, position.longitude),
-                zoom: zoom,
-                debug: true,
-                plugins: [
+    print('MapSceno build ${_mapModel.position}');
 
-                ]),
-            layers: [
-              _getTileLayer(snapshot.data),
-              MarkerLayerOptions(
-                rebuild: positionController.stream,
-                markers: getMarkers(),
-              ),
-            ],
-          );
-        });
-  }
 
-  List<Marker> getMarkers() {
-    final Marker marker = Marker(
-        point: position,
-        builder: (BuildContext context) {
-          print('update Marker');
-          return FlutterLogo();
-        }
+    return FlutterMap(
+      mapController: _mapController,
+      options: MapOptions(
+          onPositionChanged: (MapPosition position, bool hasGesture) {
+            widget.mapPosition = position;
+          },
+          center: widget.mapPosition != null
+              ? widget.mapPosition.center
+              : widget.defaultPosition,
+          zoom: widget.mapPosition != null
+              ? widget.mapPosition.zoom
+              : widget.defaultZoom,
+          debug: true,
+          interactive: true,
+          plugins: []),
+      layers: [
+        _getTileLayer(),
+        MarkerLayerOptions(
+          markers: _getListMarkers(),
+        ),
+      ],
     );
-    return [marker];
   }
 
-  TileLayerOptions _getTileLayer(MapModel map) {
-    switch (map.provider) {
+  List<Marker> _getListMarkers() {
+    List<Marker> list = List();
+    if(_markerPosition != null) {
+      list.add(_markerPosition);
+    }
+    list.addAll(_buildMarkersEvents());
+
+    return list;
+  }
+
+  List<Marker> _buildMarkersEvents() {
+    print('buildMarkers ${_events.length}');
+    List<Marker> list = List();
+
+    _events.forEach((event) {
+      list.add(Marker(
+        width: 35.0,
+        height: 35.0,
+        point: LatLng(event.latitude, event.longitude),
+        anchorPos: AnchorPos.align(AnchorAlign.top),
+        builder: (ctx) => Container(
+          child: EventIcon(event: event),
+        ),
+      ));
+    });
+
+    return list;
+  }
+
+  TileLayerOptions _getTileLayer() {
+    switch (_mapModel.provider) {
       case TypeProviderMap.mapbox:
-        return _getMapboxTileLayer(map.style);
+        return _getMapboxTileLayer(_mapModel.style);
         break;
       case TypeProviderMap.thunderForest:
-        return _getThunderForestTileLayer(map.style);
+        return _getThunderForestTileLayer(_mapModel.style);
         break;
       default:
         return _getOSMTileLayer();
@@ -128,42 +141,26 @@ class MapSceno extends StatelessWidget {
     }
   }
 
-//  Widget _buildPosition() {
-//    return StreamBuilder(
-//      stream: mapBloc.position,
-//      builder: (BuildContext context, AsyncSnapshot<LatLng> snapshot) {
-//        _mapController.move(snapshot.data, _mapController.zoom);
-//        return Marker(
-//
-//        );
-//      },
-//
-//    );
-//  }
-
-  TileLayerOptions _getMapboxTileLayer(String style) =>
-      TileLayerOptions(
-          urlTemplate:
+  TileLayerOptions _getMapboxTileLayer(String style) => TileLayerOptions(
+      urlTemplate:
           "https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}@2x.png?access_token={accessToken}",
-          additionalOptions: {
-            'accessToken': mapboxToken,
-            'id': style,
-          },
-          keepBuffer: 50);
+      additionalOptions: {
+        'accessToken': widget.mapboxToken,
+        'id': style,
+      },
+      keepBuffer: 50);
 
-  TileLayerOptions _getOSMTileLayer() =>
-      TileLayerOptions(
+  TileLayerOptions _getOSMTileLayer() => TileLayerOptions(
         urlTemplate: "https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png",
         subdomains: ['a', 'b', 'c'],
         keepBuffer: 50,
       );
 
-  TileLayerOptions _getThunderForestTileLayer(String style) =>
-      TileLayerOptions(
+  TileLayerOptions _getThunderForestTileLayer(String style) => TileLayerOptions(
         urlTemplate:
-        "https://tile.thunderforest.com/{id}/{z}/{x}/{y}.png?apikey={accessToken}",
+            "https://tile.thunderforest.com/{id}/{z}/{x}/{y}.png?apikey={accessToken}",
         additionalOptions: {
-          'accessToken': thunderForestToken,
+          'accessToken': widget.thunderForestToken,
           'id': style,
         },
         keepBuffer: 50,

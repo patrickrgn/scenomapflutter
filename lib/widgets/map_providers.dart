@@ -1,7 +1,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:sceno_map_flutter/blocs/map_bloc.dart';
-import 'package:sceno_map_flutter/models/MapModel.dart';
+import 'package:sceno_map_flutter/models/map_model.dart';
 import 'package:sceno_map_flutter/models/model.dart';
 
 class MapProviders extends StatelessWidget {
@@ -35,6 +35,6 @@ class MapProviders extends StatelessWidget {
           padding: EdgeInsets.all(0),
           elevation: model.provider == type ? 0 : 3,
           onPressed: () {
-            mapBloc.updateMapModel(MapModel(provider: type, style: style));
+            mapBloc.updateMapModel(provider: type, style: style);
           });
 }

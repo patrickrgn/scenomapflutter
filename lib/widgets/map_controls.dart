@@ -5,52 +5,19 @@ import 'package:sceno_map_flutter/blocs/map_bloc.dart';
 class MapControls extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return _buildControl();
-  }
-
-  Widget _buildControl() {
-    print("buildControl");
-    return Column(
-//      mainAxisAlignment: MainAxisAlignment.start,
-      children: <Widget>[
-        SizedBox(
-          width: 50,
-          child: IconButton(
-              icon: Icon(Icons.my_location),
-              color: Colors.red,
-              padding: EdgeInsets.all(0),
-              onPressed: () {
-                mapBloc.moveToPosition();
-              }),
+    return RawMaterialButton(
+        onPressed: () => mapBloc.moveToPosition(),
+        child: new Icon(
+          Icons.my_location,
+          color: Colors.red,
+          size: 20.0,
         ),
-
-        SizedBox(
-          width: 50,
-          child: IconButton(
-              icon: Icon(Icons.zoom_in),
-              color: Colors.black,
-              padding: EdgeInsets.all(0),
-              onPressed: () {
-                mapBloc.zoomIn();
-              }),
-        ),
-        SizedBox(
-          width: 50,
-          child: IconButton(
-              icon: Icon(Icons.zoom_out),
-              color: Colors.black,
-              padding: EdgeInsets.all(0),
-              onPressed: () {
-                mapBloc.zoomOut();
-              }),
-        ),
-        IconButton(
-            icon: Icon(Icons.refresh),
-            onPressed: () {
-              print('press');
-//              _updateDataEvents();
-            }),
-      ],
+        shape: new CircleBorder(),
+        elevation: 2.0,
+        fillColor: Colors.white,
+        padding: const EdgeInsets.all(0.0),
+        constraints: BoxConstraints.expand(height: 35, width: 35)
     );
   }
+
 }
